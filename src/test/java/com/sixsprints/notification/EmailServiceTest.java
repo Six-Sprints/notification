@@ -1,6 +1,5 @@
 package com.sixsprints.notification;
 
-import org.apache.commons.mail.EmailException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -17,7 +16,7 @@ public class EmailServiceTest extends ApplicationTests {
   private EmailAuthDto testAuth;
 
   @Test
-  public void shouldSendEmail() throws EmailException {
+  public void shouldSendEmail() {
 
     EmailDto emailDto = EmailDto.builder().to("kgujral@gmail.com").subject("Test Email")
       .content("<b>TEST</b> Email! Support HTML content!")
