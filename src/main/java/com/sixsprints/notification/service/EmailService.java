@@ -9,4 +9,6 @@ public interface EmailService {
 
   void sendMail(EmailAuthDto emailAuthDto, EmailDto emailDto) throws EmailException;
 
+  void sendMail(EmailDto emailDto) throws EmailException;
+
 }

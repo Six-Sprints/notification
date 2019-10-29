@@ -13,6 +13,25 @@ import com.sixsprints.notification.service.EmailService;
 @Service
 public class EmailServiceImpl implements EmailService {
 
+  private EmailAuthDto emailAuth;
+
+  public EmailServiceImpl() {
+  }
+
+  public EmailServiceImpl(EmailAuthDto emailAuth) {
+    super();
+    this.emailAuth = emailAuth;
+  }
+
+  @Async
+  @Override
+  public void sendMail(EmailDto emailDto) throws EmailException {
+    if (emailAuth == null) {
+      throw new IllegalArgumentException("Email Auth cannot be null. Please create one before sending the mail.");
+    }
+    sendMail(emailAuth, emailDto);
+  }
+
   @Async
   @Override
   public void sendMail(EmailAuthDto emailAuthDto, EmailDto emailDto) throws EmailException {
