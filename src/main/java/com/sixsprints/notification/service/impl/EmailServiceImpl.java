@@ -35,7 +35,6 @@ public class EmailServiceImpl implements EmailService {
   @Override
   public void sendMail(EmailAuthDto emailAuthDto, EmailDto emailDto) {
     try {
-
       HtmlEmail email = emailClient(emailAuthDto);
       email.setFrom(emailAuthDto.getUsername(), emailAuthDto.getFrom());
       email.addTo(emailDto.getTo());
@@ -52,6 +51,8 @@ public class EmailServiceImpl implements EmailService {
     HtmlEmail email = new HtmlEmail();
     email.setHostName(emailAuthDto.getHostName());
     email.setAuthenticator(new DefaultAuthenticator(emailAuthDto.getUsername(), emailAuthDto.getPassword()));
+    email.setSSLOnConnect(emailAuthDto.isSslEnabled());
+    email.setSslSmtpPort(emailAuthDto.getSslSmtpPort());
     return email;
   }
 

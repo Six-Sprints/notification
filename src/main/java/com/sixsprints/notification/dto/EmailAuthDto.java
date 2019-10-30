@@ -15,4 +15,9 @@ public class EmailAuthDto {
 
   private String password;
 
+  private boolean sslEnabled;
+
+  @Builder.Default
+  private String sslSmtpPort = "465";
+
 }
