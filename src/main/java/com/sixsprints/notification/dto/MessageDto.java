@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class EmailDto {
+public class MessageDto {
 
   private String to;
 

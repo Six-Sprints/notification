@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-import com.sixsprints.notification.dto.EmailAuthDto;
+import com.sixsprints.notification.dto.MessageAuthDto;
 
 @SpringBootApplication
 @EnableAsync
@@ -29,10 +29,10 @@ public class Application {
   }
 
   @Bean
-  public EmailAuthDto testAuth() {
-    return EmailAuthDto.builder().from(from).hostName(hostName)
+  public MessageAuthDto testAuth() {
+    return MessageAuthDto.builder().from(from).hostName(hostName)
       .username(username).password(password).sslEnabled(true)
       .build();
   }
-
+  
 }

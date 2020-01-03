@@ -5,35 +5,35 @@ import org.apache.commons.mail.HtmlEmail;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import com.sixsprints.notification.dto.EmailAuthDto;
-import com.sixsprints.notification.dto.EmailDto;
-import com.sixsprints.notification.service.EmailService;
+import com.sixsprints.notification.dto.MessageAuthDto;
+import com.sixsprints.notification.dto.MessageDto;
+import com.sixsprints.notification.service.NotificationService;
 
-@Service
-public class EmailServiceImpl implements EmailService {
+@Service("email")
+public class EmailServiceSmtp implements NotificationService {
 
-  private EmailAuthDto emailAuth;
+  private MessageAuthDto emailAuth;
 
-  public EmailServiceImpl() {
+  public EmailServiceSmtp() {
   }
 
-  public EmailServiceImpl(EmailAuthDto emailAuth) {
+  public EmailServiceSmtp(MessageAuthDto emailAuth) {
     super();
     this.emailAuth = emailAuth;
   }
 
   @Async
   @Override
-  public void sendMail(EmailDto emailDto) {
+  public void sendMessage(MessageDto emailDto) {
     if (emailAuth == null) {
       throw new IllegalArgumentException("Email Auth cannot be null. Please create one before sending the mail.");
     }
-    sendMail(emailAuth, emailDto);
+    sendMessage(emailAuth, emailDto);
   }
 
   @Async
   @Override
-  public void sendMail(EmailAuthDto emailAuthDto, EmailDto emailDto) {
+  public void sendMessage(MessageAuthDto emailAuthDto, MessageDto emailDto) {
     try {
       HtmlEmail email = emailClient(emailAuthDto);
       email.setFrom(emailAuthDto.getUsername(), emailAuthDto.getFrom());
@@ -47,7 +47,7 @@ public class EmailServiceImpl implements EmailService {
     }
   }
 
-  private HtmlEmail emailClient(EmailAuthDto emailAuthDto) {
+  private HtmlEmail emailClient(MessageAuthDto emailAuthDto) {
     HtmlEmail email = new HtmlEmail();
     email.setHostName(emailAuthDto.getHostName());
     email.setAuthenticator(new DefaultAuthenticator(emailAuthDto.getUsername(), emailAuthDto.getPassword()));
