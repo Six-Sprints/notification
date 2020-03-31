@@ -4,6 +4,7 @@ import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.HtmlEmail;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import com.sixsprints.notification.dto.MessageAuthDto;
 import com.sixsprints.notification.dto.MessageDto;
@@ -35,8 +36,10 @@ public class EmailServiceSmtp implements NotificationService {
   @Override
   public void sendMessage(MessageAuthDto emailAuthDto, MessageDto emailDto) {
     try {
+      String from = emailAuthDto.getFromEmail();
       HtmlEmail email = emailClient(emailAuthDto);
-      email.setFrom(emailAuthDto.getUsername(), emailAuthDto.getFrom());
+      email.setFrom(!StringUtils.isEmpty(emailAuthDto.getFromEmail()) ? from : emailAuthDto.getUsername(),
+        emailAuthDto.getFrom());
       email.addTo(emailDto.getTo());
       email.setSubject(emailDto.getSubject());
       email.setHtmlMsg(emailDto.getContent());

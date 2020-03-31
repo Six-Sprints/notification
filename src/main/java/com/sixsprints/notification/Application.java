@@ -12,8 +12,11 @@ import com.sixsprints.notification.dto.MessageAuthDto;
 @EnableAsync
 public class Application {
 
-  @Value(value = "${email.from}")
-  private String from;
+  @Value(value = "${email.from.name}")
+  private String fromName;
+
+  @Value(value = "${email.from.email}")
+  private String fromEmail;
 
   @Value(value = "${email.hostname}")
   private String hostName;
@@ -30,9 +33,9 @@ public class Application {
 
   @Bean
   public MessageAuthDto testAuth() {
-    return MessageAuthDto.builder().from(from).hostName(hostName)
+    return MessageAuthDto.builder().from(fromName).fromEmail(fromEmail).hostName(hostName)
       .username(username).password(password).sslEnabled(true)
       .build();
   }
-  
+
 }

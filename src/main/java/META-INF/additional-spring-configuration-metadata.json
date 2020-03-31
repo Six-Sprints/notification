@@ -1,8 +1,13 @@
 {"properties": [
   {
-    "name": "email.from",
+    "name": "email.from.name",
     "type": "java.lang.String",
-    "description": "A description for 'email.from'"
+    "description": "A description for 'email.from.name'"
+  },
+  {
+    "name": "email.from.email",
+    "type": "java.lang.String",
+    "description": "A description for 'email.from.email'"
   },
   {
     "name": "email.username",
