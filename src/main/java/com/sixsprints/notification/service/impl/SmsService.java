@@ -1,8 +1,7 @@
 package com.sixsprints.notification.service.impl;
 
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import com.sixsprints.json.util.ApiFactory;
 import com.sixsprints.notification.dto.MessageAuthDto;
@@ -13,7 +12,6 @@ import com.sixsprints.notification.service.SmsInstaService;
 import retrofit2.Call;
 import retrofit2.Response;
 
-@Service("sms")
 public class SmsService implements NotificationService {
 
   private MessageAuthDto smsAuth;
@@ -31,17 +29,20 @@ public class SmsService implements NotificationService {
   }
 
   @Override
-  @Async
-  public void sendMessage(MessageDto messageDto) {
-    if (smsAuth == null) {
-      throw new IllegalArgumentException("SMS Auth cannot be null. Please create one before sending the SMS.");
-    }
-    sendMessage(smsAuth, messageDto);
+  public Future<String> sendMessage(MessageDto messageDto) {
+    return sendMessage(smsAuth, messageDto);
   }
 
   @Override
-  @Async
-  public void sendMessage(MessageAuthDto messageAuthDto, MessageDto messageDto) {
+  public Future<String> sendMessage(MessageAuthDto messageAuthDto, MessageDto messageDto) {
+    return Executors.newSingleThreadExecutor().submit(
+      () -> send(messageAuthDto, messageDto));
+  }
+
+  private String send(MessageAuthDto messageAuthDto, MessageDto messageDto) {
+    if (messageAuthDto == null) {
+      throw new IllegalArgumentException("SMS Auth cannot be null. Please create one before sending the SMS.");
+    }
     try {
       Call<String> call = smsInstaService.sendSms(messageAuthDto.getUsername(), messageAuthDto.getPassword(),
         cleanNumber(messageDto.getTo()), messageAuthDto.getFrom(), messageDto.getContent(), 0, 2);
@@ -49,6 +50,7 @@ public class SmsService implements NotificationService {
       if (!response.isSuccessful()) {
         throw new IllegalArgumentException("Some problem happened in sending SMS. Please check your params");
       }
+      return response.body();
     } catch (Exception ex) {
       throw new IllegalArgumentException(ex.getMessage());
     }
@@ -56,7 +58,7 @@ public class SmsService implements NotificationService {
 
   private static String cleanNumber(String number) {
     String original = number;
-    if (StringUtils.isEmpty(number)) {
+    if (isEmpty(number)) {
       return null;
     }
     number = number.replace(" ", "").replace("(", "").replace(")", "").replace("-", "");
@@ -73,6 +75,10 @@ public class SmsService implements NotificationService {
       number = original;
     }
     return number.substring(1);
+  }
+
+  private static boolean isEmpty(String number) {
+    return number == null || number.isEmpty();
   }
 
   private static boolean allNumeric(String string) {

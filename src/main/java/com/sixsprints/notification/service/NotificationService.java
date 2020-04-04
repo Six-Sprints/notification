@@ -1,12 +1,14 @@
 package com.sixsprints.notification.service;
 
+import java.util.concurrent.Future;
+
 import com.sixsprints.notification.dto.MessageAuthDto;
 import com.sixsprints.notification.dto.MessageDto;
 
 public interface NotificationService {
 
-  void sendMessage(MessageAuthDto emailAuthDto, MessageDto emailDto);
+  Future<String> sendMessage(MessageAuthDto messageAuthDto, MessageDto messageDto);
 
-  void sendMessage(MessageDto emailDto);
+  Future<String> sendMessage(MessageDto messageDto);
 
 }

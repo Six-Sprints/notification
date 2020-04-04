@@ -1,24 +1,18 @@
 package com.sixsprints.notification;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-
 import com.sixsprints.notification.dto.MessageAuthDto;
 import com.sixsprints.notification.dto.MessageDto;
 import com.sixsprints.notification.service.NotificationService;
 
-public class EmailServiceTest extends ApplicationTests {
+import junit.framework.TestCase;
 
-  @Autowired
-  @Qualifier("email")
+public class EmailServiceTest extends TestCase {
+
   private NotificationService emailService;
 
-  @Autowired
   private MessageAuthDto testAuth;
 
-  @Test
-  public void shouldSendEmail() {
+  public void testShouldSendEmail() {
 
     MessageDto emailDto = MessageDto.builder().to("kgujral@gmail.com").subject("Test Email")
       .content("<b>TEST</b> Email! Support HTML content!")

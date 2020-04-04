@@ -1,16 +1,15 @@
 package com.sixsprints.notification.service.impl;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.HtmlEmail;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import com.sixsprints.notification.dto.MessageAuthDto;
 import com.sixsprints.notification.dto.MessageDto;
 import com.sixsprints.notification.service.NotificationService;
 
-@Service("email")
 public class EmailServiceSmtp implements NotificationService {
 
   private MessageAuthDto emailAuth;
@@ -23,28 +22,30 @@ public class EmailServiceSmtp implements NotificationService {
     this.emailAuth = emailAuth;
   }
 
-  @Async
   @Override
-  public void sendMessage(MessageDto emailDto) {
-    if (emailAuth == null) {
-      throw new IllegalArgumentException("Email Auth cannot be null. Please create one before sending the mail.");
-    }
-    sendMessage(emailAuth, emailDto);
+  public Future<String> sendMessage(MessageDto emailDto) {
+    return sendMessage(emailAuth, emailDto);
   }
 
-  @Async
   @Override
-  public void sendMessage(MessageAuthDto emailAuthDto, MessageDto emailDto) {
+  public Future<String> sendMessage(MessageAuthDto emailAuthDto, MessageDto emailDto) {
+    return Executors.newSingleThreadExecutor().submit(() -> send(emailAuthDto, emailDto));
+  }
+
+  private String send(MessageAuthDto emailAuthDto, MessageDto emailDto) {
+    if (emailAuthDto == null) {
+      throw new IllegalArgumentException("Email Auth cannot be null. Please create one before sending the mail.");
+    }
     try {
       String from = emailAuthDto.getFromEmail();
       HtmlEmail email = emailClient(emailAuthDto);
-      email.setFrom(!StringUtils.isEmpty(emailAuthDto.getFromEmail()) ? from : emailAuthDto.getUsername(),
+      email.setFrom(!isEmpty(from) ? from : emailAuthDto.getUsername(),
         emailAuthDto.getFrom());
       email.addTo(emailDto.getTo());
       email.setSubject(emailDto.getSubject());
       email.setHtmlMsg(emailDto.getContent());
       email.setTextMsg(emailDto.getContent());
-      email.send();
+      return email.send();
     } catch (Exception e) {
       throw new IllegalArgumentException(e.getMessage());
     }
@@ -57,6 +58,10 @@ public class EmailServiceSmtp implements NotificationService {
     email.setSSLOnConnect(emailAuthDto.isSslEnabled());
     email.setSslSmtpPort(emailAuthDto.getSslSmtpPort());
     return email;
+  }
+
+  private boolean isEmpty(String string) {
+    return string == null || string.isEmpty();
   }
 
 }
