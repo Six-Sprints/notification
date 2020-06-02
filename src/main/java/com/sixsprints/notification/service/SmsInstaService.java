@@ -6,11 +6,10 @@ import retrofit2.http.Query;
 
 public interface SmsInstaService {
 
-  String BASE_URL = "http://app.smsinsta.in/vendorsms/";
+  String BASE_URL = "http://sms.smsinsta.in/vb/";
 
-  @GET("pushsms.aspx")
-  Call<String> sendSms(@Query("clientid") String clientId, @Query("apikey") String apiKey,
-    @Query("msisdn") String to, @Query("sid") String senderId,
-    @Query("msg") String message, @Query("fl") int flag, @Query("gwid") int gwId);
+  @GET("apikey.php")
+  Call<String> sendSms(@Query("apikey") String apiKey, @Query("senderid") String senderId,
+    @Query("number") String to, @Query("message") String message, @Query("route") int route);
 
 }

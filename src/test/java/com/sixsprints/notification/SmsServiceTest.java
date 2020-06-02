@@ -1,5 +1,8 @@
 package com.sixsprints.notification;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
 import com.sixsprints.notification.dto.MessageAuthDto;
 import com.sixsprints.notification.dto.MessageDto;
 import com.sixsprints.notification.service.NotificationService;
@@ -13,10 +16,12 @@ public class SmsServiceTest extends TestCase {
 
   private NotificationService smsService = new SmsService(testAuth);
 
-  public void testShouldSendSms() {
+  public void testShouldSendSms() throws InterruptedException, ExecutionException {
     MessageDto emailDto = MessageDto.builder().to("(+91)9810306710").content("Test SMS")
       .build();
-    smsService.sendMessage(emailDto);
+    Future<String> future = smsService.sendMessage(emailDto);
+
+    System.out.println(future.get());
   }
 
 }

@@ -44,8 +44,8 @@ public class SmsService implements NotificationService {
       throw new IllegalArgumentException("SMS Auth cannot be null. Please create one before sending the SMS.");
     }
     try {
-      Call<String> call = smsInstaService.sendSms(messageAuthDto.getUsername(), messageAuthDto.getPassword(),
-        cleanNumber(messageDto.getTo()), messageAuthDto.getFrom(), messageDto.getContent(), 0, 2);
+      Call<String> call = smsInstaService.sendSms(messageAuthDto.getPassword(), messageAuthDto.getFrom(),
+        cleanNumber(messageDto.getTo()), messageDto.getContent(), 3);
       Response<String> response = call.execute();
       if (!response.isSuccessful()) {
         throw new IllegalArgumentException("Some problem happened in sending SMS. Please check your params");
