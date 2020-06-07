@@ -57,12 +57,15 @@ public class EmailServiceSmtp implements NotificationService {
   }
 
   private void attach(MessageDto emailDto, MultiPartEmail email) throws MalformedURLException, EmailException {
-    if (emailDto.getAttachmentUrl() == null || emailDto.getAttachmentUrl().isEmpty()) {
+    if (emailDto.getAttachment() == null || emailDto.getAttachment().getAttachmentUrl() == null
+      || emailDto.getAttachment().getAttachmentUrl().isEmpty()) {
       return;
     }
     EmailAttachment attachment = new EmailAttachment();
-    attachment.setURL(new URL(emailDto.getAttachmentUrl()));
+    attachment.setURL(new URL(emailDto.getAttachment().getAttachmentUrl()));
     attachment.setDisposition(EmailAttachment.ATTACHMENT);
+    attachment.setName(emailDto.getAttachment().getName());
+    attachment.setDescription(emailDto.getAttachment().getDescription());
     email.attach(attachment);
   }
 

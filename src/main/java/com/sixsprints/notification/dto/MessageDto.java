@@ -13,6 +13,6 @@ public class MessageDto {
 
   private String content;
 
-  private String attachmentUrl;
+  private AttachmentDto attachment;
 
 }
