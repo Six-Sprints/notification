@@ -1,10 +1,14 @@
 package com.sixsprints.notification.service.impl;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.apache.commons.mail.DefaultAuthenticator;
-import org.apache.commons.mail.HtmlEmail;
+import org.apache.commons.mail.EmailAttachment;
+import org.apache.commons.mail.EmailException;
+import org.apache.commons.mail.MultiPartEmail;
 
 import com.sixsprints.notification.dto.MessageAuthDto;
 import com.sixsprints.notification.dto.MessageDto;
@@ -37,22 +41,33 @@ public class EmailServiceSmtp implements NotificationService {
       throw new IllegalArgumentException("Email Auth cannot be null. Please create one before sending the mail.");
     }
     try {
+      // Create the email message
       String from = emailAuthDto.getFromEmail();
-      HtmlEmail email = emailClient(emailAuthDto);
+      MultiPartEmail email = emailClient(emailAuthDto);
       email.setFrom(!isEmpty(from) ? from : emailAuthDto.getUsername(),
         emailAuthDto.getFrom());
       email.addTo(emailDto.getTo());
       email.setSubject(emailDto.getSubject());
-      email.setHtmlMsg(emailDto.getContent());
-      email.setTextMsg(emailDto.getContent());
+      email.setMsg(emailDto.getContent());
+      attach(emailDto, email);
       return email.send();
     } catch (Exception e) {
       throw new IllegalArgumentException(e.getMessage());
     }
   }
 
-  private HtmlEmail emailClient(MessageAuthDto emailAuthDto) {
-    HtmlEmail email = new HtmlEmail();
+  private void attach(MessageDto emailDto, MultiPartEmail email) throws MalformedURLException, EmailException {
+    if (emailDto.getAttachmentUrl() == null || emailDto.getAttachmentUrl().isEmpty()) {
+      return;
+    }
+    EmailAttachment attachment = new EmailAttachment();
+    attachment.setURL(new URL(emailDto.getAttachmentUrl()));
+    attachment.setDisposition(EmailAttachment.ATTACHMENT);
+    email.attach(attachment);
+  }
+
+  private MultiPartEmail emailClient(MessageAuthDto emailAuthDto) {
+    MultiPartEmail email = new MultiPartEmail();
     email.setHostName(emailAuthDto.getHostName());
     email.setAuthenticator(new DefaultAuthenticator(emailAuthDto.getUsername(), emailAuthDto.getPassword()));
     email.setSSLOnConnect(emailAuthDto.isSslEnabled());
