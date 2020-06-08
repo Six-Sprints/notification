@@ -12,11 +12,7 @@ import junit.framework.TestCase;
 
 public class SmsServiceTest extends TestCase {
 
-  private MessageAuthDto testAuth = MessageAuthDto.builder()
-    .from("VIASMS")
-    .password("c35cdbcb-3f4c-4810-b510-c40d424529fc")
-    .username("d8ff2209-ce64-4a42-966c-2a3f64f44dee")
-    .build();
+  private MessageAuthDto testAuth;
 
   private NotificationService smsService = new SmsService(testAuth);
 
