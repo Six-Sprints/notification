@@ -8,6 +8,7 @@ import java.util.concurrent.Future;
 import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.EmailAttachment;
 import org.apache.commons.mail.EmailException;
+import org.apache.commons.mail.HtmlEmail;
 import org.apache.commons.mail.MultiPartEmail;
 
 import com.sixsprints.notification.dto.MessageAuthDto;
@@ -43,12 +44,13 @@ public class EmailServiceSmtp implements NotificationService {
     try {
       // Create the email message
       String from = emailAuthDto.getFromEmail();
-      MultiPartEmail email = emailClient(emailAuthDto);
+      HtmlEmail email = emailClient(emailAuthDto);
       email.setFrom(!isEmpty(from) ? from : emailAuthDto.getUsername(),
         emailAuthDto.getFrom());
       email.addTo(emailDto.getTo());
       email.setSubject(emailDto.getSubject());
       email.setMsg(emailDto.getContent());
+      email.setHtmlMsg(emailDto.getContent());
       attach(emailDto, email);
       return email.send();
     } catch (Exception e) {
@@ -69,8 +71,8 @@ public class EmailServiceSmtp implements NotificationService {
     email.attach(attachment);
   }
 
-  private MultiPartEmail emailClient(MessageAuthDto emailAuthDto) {
-    MultiPartEmail email = new MultiPartEmail();
+  private HtmlEmail emailClient(MessageAuthDto emailAuthDto) {
+    HtmlEmail email = new HtmlEmail();
     email.setHostName(emailAuthDto.getHostName());
     email.setAuthenticator(new DefaultAuthenticator(emailAuthDto.getUsername(), emailAuthDto.getPassword()));
     email.setSSLOnConnect(emailAuthDto.isSslEnabled());
