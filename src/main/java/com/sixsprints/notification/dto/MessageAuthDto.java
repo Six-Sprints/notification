@@ -8,7 +8,7 @@ import lombok.Data;
 public class MessageAuthDto {
 
   private String from;
-  
+
   private String fromEmail;
 
   private String hostName;

@@ -6,8 +6,9 @@ import java.util.concurrent.Future;
 import com.sixsprints.json.util.ApiFactory;
 import com.sixsprints.notification.dto.MessageAuthDto;
 import com.sixsprints.notification.dto.MessageDto;
+import com.sixsprints.notification.enums.sms.SmsServiceOptions;
 import com.sixsprints.notification.service.NotificationService;
-import com.sixsprints.notification.service.SmsInstaService;
+import com.sixsprints.notification.service.SmsApiService;
 
 import retrofit2.Call;
 import retrofit2.Response;
@@ -16,16 +17,23 @@ public class SmsService implements NotificationService {
 
   private MessageAuthDto smsAuth;
 
-  private SmsInstaService smsInstaService;
+  private SmsApiService smsApiService;
 
   public SmsService() {
     this(null);
   }
 
   public SmsService(MessageAuthDto smsAuth) {
+    this(smsAuth, SmsServiceOptions.INSTA_SMS);
+  }
+
+  public SmsService(MessageAuthDto smsAuth, SmsServiceOptions smsService) {
     super();
     this.smsAuth = smsAuth;
-    smsInstaService = ApiFactory.create(SmsInstaService.class, SmsInstaService.BASE_URL);
+    if (smsService == null) {
+      smsService = SmsServiceOptions.INSTA_SMS;
+    }
+    smsApiService = (SmsApiService) ApiFactory.create(smsService.getSmsApiService(), smsService.getBaseUrl());
   }
 
   @Override
@@ -45,11 +53,9 @@ public class SmsService implements NotificationService {
     }
     try {
 
-      Call<String> call = smsInstaService.sendSms(messageAuthDto.getPassword(), messageAuthDto.getFrom(),
+      Call<String> call = smsApiService.sendSms(messageAuthDto.getPassword(), messageAuthDto.getFrom(),
         cleanNumber(messageDto.getTo()), messageDto.getContent(), 3);
 
-//      Call<String> call = smsInstaService.sendSms(messageAuthDto.getUsername(), messageAuthDto.getPassword(),
-//        messageAuthDto.getFrom(), cleanNumber(messageDto.getTo()), messageDto.getContent(), 0, 2);
       Response<String> response = call.execute();
       if (!response.isSuccessful()) {
         throw new IllegalArgumentException("Some problem happened in sending SMS. Please check your params");
