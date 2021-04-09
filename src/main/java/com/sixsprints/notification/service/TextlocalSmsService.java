@@ -11,6 +11,7 @@ public interface TextlocalSmsService extends SmsApiService {
   @Override
   @GET("send")
   Call<String> sendSms(@Query("apikey") String apiKey, @Query("sender") String senderId,
-    @Query("numbers") String to, @Query("message") String message, @Query("custom") int custom);
+    @Query("numbers") String to, @Query("message") String message, @Query("templateid") String templateId,
+    @Query("custom") int custom);
 
 }

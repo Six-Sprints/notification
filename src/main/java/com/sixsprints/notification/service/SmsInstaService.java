@@ -11,6 +11,7 @@ public interface SmsInstaService extends SmsApiService {
   @Override
   @GET("apikey.php")
   Call<String> sendSms(@Query("apikey") String apiKey, @Query("senderid") String senderId,
-    @Query("number") String to, @Query("message") String message, @Query("route") int route);
+    @Query("number") String to, @Query("message") String message, @Query("templateid") String templateId,
+    @Query("route") int route);
 
 }

@@ -54,7 +54,7 @@ public class SmsService implements NotificationService {
     try {
 
       Call<String> call = smsApiService.sendSms(messageAuthDto.getPassword(), messageAuthDto.getFrom(),
-        cleanNumber(messageDto.getTo()), messageDto.getContent(), 3);
+        cleanNumber(messageDto.getTo()), messageDto.getContent(), messageDto.getTemplateId(), 3);
 
       Response<String> response = call.execute();
       if (!response.isSuccessful()) {
