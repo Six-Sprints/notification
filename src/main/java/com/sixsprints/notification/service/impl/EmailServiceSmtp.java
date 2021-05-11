@@ -77,6 +77,7 @@ public class EmailServiceSmtp implements NotificationService {
     email.setAuthenticator(new DefaultAuthenticator(emailAuthDto.getUsername(), emailAuthDto.getPassword()));
     email.setSSLOnConnect(emailAuthDto.isSslEnabled());
     email.setSslSmtpPort(emailAuthDto.getSslSmtpPort());
+    email.setCharset("UTF-8");
     return email;
   }
 
