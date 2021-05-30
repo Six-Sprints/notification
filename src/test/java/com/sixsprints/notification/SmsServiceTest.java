@@ -21,11 +21,18 @@ public class SmsServiceTest extends TestCase {
   private NotificationService smsService = new SmsService(testAuth, SmsServiceOptions.INSTA_SMS);
 
   public void testShouldSendSms() throws InterruptedException, ExecutionException {
-    MessageDto emailDto = MessageDto.builder().to("(+91)9810306710").content(
-      "1234 is your confidential OTP for Logging in to your Proclinic Account.")
-      .templateId("1207161779479384687")
+
+    String url = "https://cutt.ly/EnsEkQN";
+
+    MessageDto messageDto = MessageDto.builder()
+      .to("(+91)9810306710")
+      .templateId("1207161467070888886")
+      .subject("Prescription is ready")
+      .content(
+        "Hi Karan. Your prescription is ready and can be accessed via the below link:\n" + url)
       .build();
-    Future<String> future = smsService.sendMessage(emailDto);
+
+    Future<String> future = smsService.sendMessage(messageDto);
 
     System.out.println(future.get());
   }
