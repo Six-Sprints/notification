@@ -3,6 +3,7 @@ package com.sixsprints.notification.service.impl;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import com.sixsprints.json.dto.ApiCall;
 import com.sixsprints.json.dto.Mapping;
 import com.sixsprints.json.util.ApiFactory;
 import com.sixsprints.notification.dto.ShortURLDto;
@@ -31,10 +32,14 @@ public class URLShorteningServiceImpl implements URLShorteningService {
   @Override
   public ShortURLDto shorten(String url) {
     try {
-      Call<String> call = urlShorteningService.sendSms(this.apiKey, url);
+      Call<String> call = urlShorteningService.shortenUrl(this.apiKey, url);
 
-      ShortURLDto dto = ApiFactory.makeCallAndTransform(call, ShortURLDto.class,
-        Mapping.builder().rootElement("url").build());
+      ShortURLDto dto = ApiFactory.makeCallAndTransform(
+        ApiCall.builder()
+          .call(call)
+          .mapping(Mapping.builder().rootElement("url").build())
+          .build(),
+        ShortURLDto.class);
 
       return dto;
     } catch (Exception ex) {

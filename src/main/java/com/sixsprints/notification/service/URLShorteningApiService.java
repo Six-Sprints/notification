@@ -9,6 +9,6 @@ public interface URLShorteningApiService {
   String BASE_URL = "http://cutt.ly/api/";
 
   @GET("api.php")
-  Call<String> sendSms(@Query("key") String apiKey, @Query("short") String url);
+  Call<String> shortenUrl(@Query("key") String apiKey, @Query("short") String url);
 
 }

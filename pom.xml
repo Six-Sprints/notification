@@ -5,17 +5,17 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sixsprints</groupId>
 	<artifactId>notification</artifactId>
-	<version>0.1.14</version>
+	<version>0.1.15</version>
 	<name>notification-api</name>
 	<packaging>jar</packaging>
 	<description>Notification API</description>
 	<properties>
-		<java.version>11</java.version>
+		<java.version>17</java.version>
 		<commons.email.version>1.5</commons.email.version>
-		<lombok.version>1.18.26</lombok.version>
-		<junit.version>5.9.2</junit.version>
-		<json.transform.version>v0.1.6-SNAPSHOT</json.transform.version>
-		<maven.compiler.plugin.version>3.10.1</maven.compiler.plugin.version>
+		<lombok.version>1.18.28</lombok.version>
+		<junit.version>5.10.0</junit.version>
+		<json.transform.version>v0.1.16-SNAPSHOT</json.transform.version>
+		<maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	<dependencies>
