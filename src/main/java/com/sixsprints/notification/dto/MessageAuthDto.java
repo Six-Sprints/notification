@@ -1,5 +1,7 @@
 package com.sixsprints.notification.dto;
 
+import java.time.Duration;
+
 import lombok.Builder;
 import lombok.Data;
 
@@ -18,6 +20,8 @@ public class MessageAuthDto {
   private String password;
 
   private boolean sslEnabled;
+  
+  private Duration frequency;
 
   @Builder.Default
   private String sslSmtpPort = "465";
