@@ -1,5 +1,6 @@
 package com.sixsprints.notification;
 
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -14,9 +15,10 @@ public class EmailServiceTest {
 
   private MessageAuthDto testAuth = MessageAuthDto.builder()
     .from("")
+    .fromEmail("")
     .hostName("")
-    .password("")
     .username("")
+    .password("")
     .sslEnabled(true)
     .build();
 
@@ -25,8 +27,11 @@ public class EmailServiceTest {
   @Test
   public void testShouldSendEmail() throws InterruptedException, ExecutionException {
 
-    MessageDto emailDto = MessageDto.builder().to("kgujral@gmail.com").subject("Test Email")
-      .content("<b>TEST3</b> Email! Support HTML content!")
+    MessageDto emailDto = MessageDto.builder()
+      .to("kgujral@gmail.com")
+      .subject("Test Email")
+      .templateId("email")
+      .templateValues(Map.of("otp", "123456"))
       .build();
 
     Future<String> sendMessage = emailService.sendMessage(testAuth, emailDto);

@@ -13,6 +13,7 @@ import org.apache.commons.mail.MultiPartEmail;
 
 import com.sixsprints.notification.dto.MessageAuthDto;
 import com.sixsprints.notification.dto.MessageDto;
+import com.sixsprints.notification.hbs.HandleBarTemplateService;
 import com.sixsprints.notification.service.NotificationService;
 
 public class EmailServiceSmtp implements NotificationService {
@@ -42,6 +43,16 @@ public class EmailServiceSmtp implements NotificationService {
       throw new IllegalArgumentException("Email Auth cannot be null. Please create one before sending the mail.");
     }
     try {
+
+      String content = emailDto.getContent();
+      String htmlContent = emailDto.getContent();
+      if (!isEmpty(emailDto.getTemplateId())) {
+        htmlContent = HandleBarTemplateService.parse(emailDto.getTemplateId(), emailDto.getTemplateValues());
+        if (isEmpty(content)) {
+          content = htmlContent;
+        }
+      }
+
       // Create the email message
       String from = emailAuthDto.getFromEmail();
       HtmlEmail email = emailClient(emailAuthDto);
@@ -49,8 +60,8 @@ public class EmailServiceSmtp implements NotificationService {
         emailAuthDto.getFrom());
       email.addTo(emailDto.getTo());
       email.setSubject(emailDto.getSubject());
-      email.setMsg(emailDto.getContent());
-      email.setHtmlMsg(emailDto.getContent());
+      email.setMsg(content);
+      email.setHtmlMsg(htmlContent);
       attach(emailDto, email);
       return email.send();
     } catch (Exception e) {
@@ -59,8 +70,7 @@ public class EmailServiceSmtp implements NotificationService {
   }
 
   private void attach(MessageDto emailDto, MultiPartEmail email) throws MalformedURLException, EmailException {
-    if (emailDto.getAttachment() == null || emailDto.getAttachment().getAttachmentUrl() == null
-      || emailDto.getAttachment().getAttachmentUrl().isEmpty()) {
+    if (emailDto.getAttachment() == null || isEmpty(emailDto.getAttachment().getAttachmentUrl())) {
       return;
     }
     EmailAttachment attachment = new EmailAttachment();

@@ -16,5 +16,7 @@ public class MessageDto {
   private AttachmentDto attachment;
 
   private String templateId;
+  
+  private Object templateValues;
 
 }

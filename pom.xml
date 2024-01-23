@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sixsprints</groupId>
 	<artifactId>notification</artifactId>
-	<version>0.1.17</version>
+	<version>0.1.18</version>
 	<name>notification-api</name>
 	<packaging>jar</packaging>
 	<description>Notification API</description>
@@ -15,6 +15,7 @@
 		<lombok.version>1.18.30</lombok.version>
 		<junit.version>5.10.0</junit.version>
 		<json.transform.version>0.1.17</json.transform.version>
+		<handlebars.version>4.3.1</handlebars.version>
 		<maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -34,6 +35,11 @@
 			<groupId>com.github.Six-Sprints</groupId>
 			<artifactId>json-transform</artifactId>
 			<version>${json.transform.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.jknack</groupId>
+			<artifactId>handlebars</artifactId>
+			<version>${handlebars.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
