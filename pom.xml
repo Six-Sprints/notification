@@ -42,6 +42,11 @@
 			<version>${handlebars.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>co.freelens</groupId>
+			<artifactId>onesignal-java-client</artifactId>
+			<version>1.2.2</version>
+		</dependency>
+		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-api</artifactId>
 			<version>${junit.version}</version>
