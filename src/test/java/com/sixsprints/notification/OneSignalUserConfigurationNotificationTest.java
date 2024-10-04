@@ -72,8 +72,7 @@ public class OneSignalUserConfigurationNotificationTest {
 		subscriptionObject = new SubscriptionObject();
 		subscriptionObject.setType(TypeEnum.ANDROIDPUSH);
 		subscriptionObject.setNotificationTypes(null);
-		subscriptionObject.setToken(
-				"eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL3d3dy53ZWJzaXRlLmNvbSIsInN1YiI6IlVcdTAwMDVcdTAwMDRKdVx1MDAwMVx1MDAwMFx1MDAwZnNcdTAwMDFQXHR3XHUwMDAwQHRcdTAwMDVWWUMlXHUwMDAwXHUwMDAwWCIsImV4cCI6MTczMDIzMjYxMSwiaWF0IjoxNzI3NjQwNjExfQ.Dk12DcQc0jC84sFDJIjh8GL3PolxdQPZ2iNNxCjLmgw");
+		subscriptionObject.setToken("");
 		subscriptions.add(subscriptionObject);
 		OneSignalUserDto userDto = OneSignalUserDto.builder().slug("USR0000001").email("user@jptokyo.com")
 				.subscriptions(subscriptions).build();
