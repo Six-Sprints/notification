@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
 import com.onesignal.client.ApiException;
+import com.onesignal.client.model.Notification;
 import com.onesignal.client.model.StringMap;
 import com.onesignal.client.model.SubscriptionObject;
 import com.onesignal.client.model.SubscriptionObject.TypeEnum;
@@ -27,7 +28,9 @@ public class OneSignalUserConfigurationNotificationTest {
 
 	private OneSignalAuthDto oneSignalAuthDto = OneSignalAuthDto.builder().appId("741d18a1-0c6c-408b-9079-7fdb364b532a")
 			.appKeyToken("MDEwMzhiOTgtMTQwYy00YWMzLWIwNmEtOGJlYzYxOWMwOWFk")
-			.userKeyToken("MDEwMzhiOTgtMTQwYy00YWMzLWIwNmEtOGJlYzYxOWMwOWFk").build();
+			.userKeyToken(
+					"eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL3d3dy53ZWJzaXRlLmNvbSIsInN1YiI6IlVcdTAwMDVcdTAwMDRKdVx1MDAwMVx1MDAwMFx1MDAwZnNcdTAwMDFQXHR3XHUwMDAwQHRcdTAwMDVWWUMlXHUwMDAwXHUwMDAwWCIsImV4cCI6MTczMDIzMjYxMSwiaWF0IjoxNzI3NjQwNjExfQ.Dk12DcQc0jC84sFDJIjh8GL3PolxdQPZ2iNNxCjLmgw")
+			.build();
 	private OneSignalUserDto userDtoOne = OneSignalUserDto.builder().slug("USR0000001").email("user1@jptokyo.com")
 			.subscriptions(null).build();
 	@SuppressWarnings("unused")
@@ -59,14 +62,21 @@ public class OneSignalUserConfigurationNotificationTest {
 	public void createUserWithSubscription() throws ApiException, InterruptedException {
 		List<SubscriptionObject> subscriptions = new ArrayList<>();
 		SubscriptionObject subscriptionObject = new SubscriptionObject();
-		subscriptionObject.setType(TypeEnum.FIREFOXPUSH);
-		subscriptionObject.setNotificationTypes(null);
-		subscriptionObject.setToken("FIREFOXWEBTOKEN");
-		subscriptions.add(subscriptionObject);
+//		subscriptionObject.setType(TypeEnum.FIREFOXPUSH);
+//		subscriptionObject.setNotificationTypes(null);
+//		subscriptionObject.setToken("FIREFOXWEBTOKEN");
+//		subscriptions.add(subscriptionObject);
+//		subscriptionObject = new SubscriptionObject();
+//		subscriptionObject.setType(TypeEnum.SAFARILEGACYPUSH);
+//		subscriptionObject.setNotificationTypes(null);
+//		subscriptionObject.setToken("SAFARILEGACYWEBTOKEN");
+//		subscriptions.add(subscriptionObject);
+
 		subscriptionObject = new SubscriptionObject();
-		subscriptionObject.setType(TypeEnum.SAFARILEGACYPUSH);
+		subscriptionObject.setType(TypeEnum.ANDROIDPUSH);
 		subscriptionObject.setNotificationTypes(null);
-		subscriptionObject.setToken("SAFARILEGACYWEBTOKEN");
+		subscriptionObject.setToken(
+				"eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczovL3d3dy53ZWJzaXRlLmNvbSIsInN1YiI6IlVcdTAwMDVcdTAwMDRKdVx1MDAwMVx1MDAwMFx1MDAwZnNcdTAwMDFQXHR3XHUwMDAwQHRcdTAwMDVWWUMlXHUwMDAwXHUwMDAwWCIsImV4cCI6MTczMDIzMjYxMSwiaWF0IjoxNzI3NjQwNjExfQ.Dk12DcQc0jC84sFDJIjh8GL3PolxdQPZ2iNNxCjLmgw");
 		subscriptions.add(subscriptionObject);
 		OneSignalUserDto userDto = OneSignalUserDto.builder().slug("USR0000001").email("user@jptokyo.com")
 				.subscriptions(subscriptions).build();
@@ -139,8 +149,8 @@ public class OneSignalUserConfigurationNotificationTest {
 		stringMapHeading.en("This is sample heading.");
 		StringMap stringMapContent = new StringMap();
 		stringMapContent.en("This is sample content.");
-		OneSignalNotificationDto notificationDto = OneSignalNotificationDto.builder().headings(stringMapContent)
-				.contents(stringMapHeading)
+		OneSignalNotificationDto notificationDto = OneSignalNotificationDto.builder().headings(stringMapHeading)
+				.contents(stringMapContent)
 				.app_url(
 						"https://dev.oditly.jptc.link/settings/organisation/manage-units-details?mode=view&slug=UNT00000132")
 				.web_url("https://youtube.com").notificationTypes(NotificationTypeEnum.PUSH)
@@ -149,7 +159,11 @@ public class OneSignalUserConfigurationNotificationTest {
 		if (ObjectUtils.isEmpty(notificationDto.getNotifications())) {
 			System.out.println("Notification Not Created");
 		} else {
-			System.err.println("Notification Created");
+			System.err.println("Notification Created ");
+			for (Notification notification : notificationDto.getNotifications()) {
+				System.err.println("Notification Created " + notification.getAppId() + notification.getExternalId()
+						+ notification.getIsAndroid());
+			}
 		}
 		assertNotEquals(notificationDto.getNotifications(), null);
 		Thread.sleep(5000);

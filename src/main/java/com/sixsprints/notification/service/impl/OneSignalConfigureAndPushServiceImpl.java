@@ -18,6 +18,7 @@ import com.onesignal.client.model.CreateSubscriptionRequestBody;
 import com.onesignal.client.model.InlineResponse201;
 import com.onesignal.client.model.Notification;
 import com.onesignal.client.model.Notification.TargetChannelEnum;
+import com.onesignal.client.model.NotificationWithMeta;
 import com.onesignal.client.model.PlayerNotificationTargetIncludeAliases;
 import com.onesignal.client.model.SubscriptionObject;
 import com.onesignal.client.model.User;
@@ -192,8 +193,18 @@ public class OneSignalConfigureAndPushServiceImpl implements OneSignalConfigureA
 				notificationDto.setNotifications(List.of(notification));
 				log.info("createOneSignalNotification(): Success {}", response.toJson());
 			}
+		} else {
+			System.out.println("createOneSignalNotification(): EMPTY {}" + notification);
+			log.info("createOneSignalNotification(): EMPTY {}", notification);
 		}
 		return notificationDto;
+	}
+
+	@SuppressWarnings("unused")
+	private void printAllSegments(CreateNotificationSuccessResponse response) throws ApiException {
+		NotificationWithMeta notificationWithMeta = getOneSignalApiInstance()
+				.getNotification(oneSignalAuthDto.getAppId(), response.getId());
+		log.info("Notification Error Status {}", notificationWithMeta.getErrored());
 	}
 
 	private Notification createNotification(OneSignalNotificationDto notificationDto) throws ApiException {
@@ -206,12 +217,14 @@ public class OneSignalConfigureAndPushServiceImpl implements OneSignalConfigureA
 			notification.setIsAnyWeb(true);
 			notification.setIsAndroid(true);
 			notification.setIsIos(true);
+			notification.androidVisibility(1);
+			notification.setHuaweiVisibility(1);
 			PlayerNotificationTargetIncludeAliases includeAliases = new PlayerNotificationTargetIncludeAliases();
 			includeAliases.setAliasLabel(List.of(OneSignalUserDto.EXTERNAL_ID));
 			notification.setIncludeAliases(includeAliases);
 			notification.setIncludeExternalUserIds(notificationDto.getUserSlugs());
 			notification.targetChannel(TargetChannelEnum.PUSH);
-			notification.setIncludedSegments(Arrays.asList(new String[] { "Subscribed Users" }));
+			notification.setIncludedSegments(Arrays.asList(new String[] { "Active Subscriptions" }));
 			notification.setHeadings(notificationDto.getHeadings());
 			notification.setContents(notificationDto.getContents());
 			notification.setWebUrl(notificationDto.getWeb_url());
