@@ -1,7 +1,6 @@
 package com.sixsprints.notification.service.impl;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -19,7 +18,7 @@ import com.onesignal.client.model.InlineResponse201;
 import com.onesignal.client.model.Notification;
 import com.onesignal.client.model.Notification.TargetChannelEnum;
 import com.onesignal.client.model.NotificationWithMeta;
-import com.onesignal.client.model.PlayerNotificationTargetIncludeAliases;
+import com.onesignal.client.model.PropertiesObject;
 import com.onesignal.client.model.SubscriptionObject;
 import com.onesignal.client.model.User;
 import com.sixsprints.notification.dto.OneSignalAuthDto;
@@ -91,6 +90,9 @@ public class OneSignalConfigureAndPushServiceImpl implements OneSignalConfigureA
 		User user = new User();
 		user.setSubscriptions(subscriptionObjects);
 		user.setIdentity(Map.of(OneSignalUserDto.EXTERNAL_ID, userDto.getSlug()));
+		PropertiesObject propertiesObject = new PropertiesObject();
+		propertiesObject.setTags(Map.of(OneSignalUserDto.USER_SLUG, userDto.getSlug()));
+		user.setProperties(propertiesObject);
 		try {
 			User oneSignalUser = getOneSignalApiInstance().createUser(oneSignalAuthDto.getAppId(), user);
 			userDto.setOneSignalUser(oneSignalUser);
@@ -219,12 +221,19 @@ public class OneSignalConfigureAndPushServiceImpl implements OneSignalConfigureA
 			notification.setIsIos(true);
 			notification.androidVisibility(1);
 			notification.setHuaweiVisibility(1);
-			PlayerNotificationTargetIncludeAliases includeAliases = new PlayerNotificationTargetIncludeAliases();
-			includeAliases.setAliasLabel(List.of(OneSignalUserDto.EXTERNAL_ID));
-			notification.setIncludeAliases(includeAliases);
+//			PlayerNotificationTargetIncludeAliases includeAliases = new PlayerNotificationTargetIncludeAliases();
+//			includeAliases.setAliasLabel(notificationDto.getUserSlugs());
+//			notification.setIncludeAliases(includeAliases);
 			notification.setIncludeExternalUserIds(notificationDto.getUserSlugs());
+//			notification.setExternalId(notificationDto.getUserSlugs().get(0));
 			notification.targetChannel(TargetChannelEnum.PUSH);
-			notification.setIncludedSegments(Arrays.asList(new String[] { "Active Subscriptions" }));
+//			notification.setIncludedSegments(Arrays.asList(new String[] { "Active Subscriptions" }));
+//			Filter filter = new Filter();
+//			filter.setField("tags");
+//			filter.setKey(OneSignalUserDto.USER_SLUG);
+//			filter.setRelation(RelationEnum.EQUAL);
+//			filter.setValue("USR00000164");
+//			notification.setFilters(List.of(filter));
 			notification.setHeadings(notificationDto.getHeadings());
 			notification.setContents(notificationDto.getContents());
 			notification.setWebUrl(notificationDto.getWeb_url());
