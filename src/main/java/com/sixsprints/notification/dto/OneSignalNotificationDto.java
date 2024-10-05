@@ -2,6 +2,7 @@ package com.sixsprints.notification.dto;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import com.onesignal.client.model.Notification;
 import com.onesignal.client.model.StringMap;
@@ -27,6 +28,8 @@ public class OneSignalNotificationDto {
 	private String app_url;
 	// Web Device URL
 	private String web_url;
+	// Custom Data Object
+	private Map<String, Object> customData;
 
 	@Builder.Default
 	private Long ttl = new Date().getTime();
