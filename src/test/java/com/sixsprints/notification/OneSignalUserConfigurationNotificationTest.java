@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
@@ -147,10 +148,11 @@ public class OneSignalUserConfigurationNotificationTest {
 		stringMapContent.en("This is sample content.");
 		OneSignalNotificationDto notificationDto = OneSignalNotificationDto.builder().headings(stringMapHeading)
 				.contents(stringMapContent)
-				.app_url(
-						"https://dev.oditly.jptc.link/settings/organisation/manage-units-details?mode=view&slug=UNT00000132")
-				.web_url("https://youtube.com").notificationTypes(NotificationTypeEnum.PUSH)
-				.userSlugs(List.of("USR0000001")).build();
+//				.app_url(
+//						"https://dev.oditly.jptc.link/settings/organisation/manage-units-details?mode=view&slug=UNT00000132")
+//				.web_url("https://youtube.com")
+				.notificationTypes(NotificationTypeEnum.PUSH).customData(Map.of("slug", "USR0000001"))
+				.userSlugs(List.of("USR00000164")).build();
 		notificationDto = configureAndPushService.createOneSignalNotification(notificationDto);
 		if (ObjectUtils.isEmpty(notificationDto.getNotifications())) {
 			System.out.println("Notification Not Created");
