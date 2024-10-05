@@ -27,6 +27,8 @@ public class OneSignalNotificationDto {
 	private String app_url;
 	// Web Device URL
 	private String web_url;
+	// Web Device URL
+	private String deeplinkurl;
 
 	@Builder.Default
 	private Long ttl = new Date().getTime();
