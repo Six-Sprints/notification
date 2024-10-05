@@ -228,7 +228,7 @@ public class OneSignalConfigureAndPushServiceImpl implements OneSignalConfigureA
 			notification.setContents(notificationDto.getContents());
 			notification.setWebUrl(notificationDto.getWeb_url());
 			notification.setAppUrl(notificationDto.getApp_url());
-			notification.setCustomData(notificationDto.getCustomData());
+			notification.setData(notificationDto.getCustomData());
 			notification.setPriority(notificationDto.getPriority());
 			return notification;
 		} else if (notificationDto.getNotificationTypes().equals(NotificationTypeEnum.IN_APP)
