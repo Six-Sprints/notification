@@ -120,7 +120,12 @@ public class OneSignalConfigureAndPushServiceImpl implements OneSignalConfigureA
 
 		if (!ObjectUtils.isEmpty(subscriptionObjects)) {
 			OneSignalUserDto oneSignalUserDto = getOneSignalUser(userDto);
-			List<SubscriptionObject> userCurrentSubscriptions = oneSignalUserDto.getSubscriptions();
+			List<SubscriptionObject> userCurrentSubscriptions = new ArrayList<>();
+			if (!ObjectUtils.isEmpty(oneSignalUserDto.getOneSignalUser())
+					&& !ObjectUtils.isEmpty(oneSignalUserDto.getOneSignalUser().getSubscriptions())) {
+				userCurrentSubscriptions = oneSignalUserDto.getOneSignalUser().getSubscriptions();
+			}
+			log.info("updateOneSignalUser(): checking existing subscriptions(): {}", userCurrentSubscriptions);
 			for (SubscriptionObject newSubscriptionObject : subscriptionObjects) {
 				SubscriptionObject alreadySubscribedObject = userCurrentSubscriptions.stream()
 						.filter(e -> e.getType().equals(newSubscriptionObject.getType())).findFirst().orElse(null);
@@ -138,9 +143,12 @@ public class OneSignalConfigureAndPushServiceImpl implements OneSignalConfigureA
 						log.info("updateOneSignalUser():deleteSubscription(): Error {}", e);
 						e.printStackTrace();
 					}
+				} else {
+					log.info("updateOneSignalUser():deleteSubscription(): Nothing To Delete");
 				}
 				if (ObjectUtils.isEmpty(alreadySubscribedObject) || (!ObjectUtils.isEmpty(alreadySubscribedObject)
 						&& !alreadySubscribedObject.getToken().equals(newSubscriptionObject.getToken()))) {
+					log.info("updateOneSignalUser(): createSubscription() Trying to Create New Subscription ");
 					newSubscriptionObject.setEnabled(true);
 					CreateSubscriptionRequestBody createSubscriptionRequestBody = new CreateSubscriptionRequestBody();
 					createSubscriptionRequestBody.setSubscription(newSubscriptionObject);
@@ -157,6 +165,10 @@ public class OneSignalConfigureAndPushServiceImpl implements OneSignalConfigureA
 						log.info("updateOneSignalUser():createSubscription(): Error {}", e);
 						e.printStackTrace();
 					}
+				} else {
+					log.info(
+							"updateOneSignalUser(): createSubscription() Failed Trying to Create New Subscription {} {}",
+							alreadySubscribedObject, newSubscriptionObject);
 				}
 			}
 		}
