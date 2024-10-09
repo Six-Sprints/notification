@@ -10,7 +10,8 @@ public interface OneSignalConfigureAndPushService {
 
 	OneSignalUserDto createOneSignalUser(OneSignalUserDto userDto) throws ApiException;
 
-	OneSignalUserDto updateOneSignalUser(OneSignalUserDto userDto) throws ApiException;
+	OneSignalUserDto updateOneSignalUser(OneSignalUserDto userDto, boolean deleteOtherSameTypeSubscriptions)
+			throws ApiException;
 
 	void deleteOneSignalUser(OneSignalUserDto userDto) throws ApiException;
 
