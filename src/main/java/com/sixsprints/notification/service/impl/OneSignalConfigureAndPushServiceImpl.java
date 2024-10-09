@@ -3,6 +3,7 @@ package com.sixsprints.notification.service.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -20,6 +21,7 @@ import com.onesignal.client.model.Notification.TargetChannelEnum;
 import com.onesignal.client.model.NotificationWithMeta;
 import com.onesignal.client.model.PropertiesObject;
 import com.onesignal.client.model.SubscriptionObject;
+import com.onesignal.client.model.UpdateSubscriptionRequestBody;
 import com.onesignal.client.model.User;
 import com.sixsprints.notification.dto.OneSignalAuthDto;
 import com.sixsprints.notification.dto.OneSignalNotificationDto;
@@ -48,10 +50,13 @@ public class OneSignalConfigureAndPushServiceImpl implements OneSignalConfigureA
 			log.info("getOneSignalApiInstance(): New Instance.");
 			// Recommended to create multiple instance per request
 			ApiClient defaultClient = Configuration.getDefaultApiClient();
-			HttpBearerAuth appKey = (HttpBearerAuth) defaultClient.getAuthentication("app_key");
-			appKey.setBearerToken(oneSignalAuthDto.getAppKeyToken());
-			HttpBearerAuth userKey = (HttpBearerAuth) defaultClient.getAuthentication("user_key");
-			userKey.setBearerToken(oneSignalAuthDto.getUserKeyToken());
+			if (StringUtils.isNotEmpty(oneSignalAuthDto.getAppKeyToken())) {
+				HttpBearerAuth appKey = (HttpBearerAuth) defaultClient.getAuthentication("app_key");
+				appKey.setBearerToken(oneSignalAuthDto.getAppKeyToken());
+			} else if (StringUtils.isNotEmpty(oneSignalAuthDto.getUserKeyToken())) {
+				HttpBearerAuth userKey = (HttpBearerAuth) defaultClient.getAuthentication("user_key");
+				userKey.setBearerToken(oneSignalAuthDto.getUserKeyToken());
+			}
 			return new DefaultApi(defaultClient);
 		} else {
 			log.info("getOneSignalApiInstance(): OLD Instance.");
@@ -61,141 +66,177 @@ public class OneSignalConfigureAndPushServiceImpl implements OneSignalConfigureA
 
 	@Override
 	public OneSignalUserDto getOneSignalUser(OneSignalUserDto userDto) throws ApiException {
-		log.info("getOneSignalUser(): {}", userDto);
+		log.info("getOneSignalUser(): User Slug {}", userDto.getSlug());
 		try {
 			User oneSignalUser = getOneSignalApiInstance().fetchUser(oneSignalAuthDto.getAppId(),
 					OneSignalUserDto.EXTERNAL_ID, userDto.getSlug());
 			userDto.setOneSignalUser(oneSignalUser);
-			log.info("getOneSignalUser(): {}", oneSignalUser.toJson());
-		} catch (ApiException e) {
-			log.info("getOneSignalUser(): Error {}", e);
-			e.printStackTrace();
+			log.info("getOneSignalUser(): User Slug {}, One Signal User Id {}", userDto.getSlug(),
+					userDto.getOneSignalUser().getIdentity());
+		} catch (Exception ex) {
+			log.info("getOneSignalUser(): User Slug {}, One Signal User Not Found", userDto.getSlug());
 		}
 		return userDto;
 	}
 
 	@Override
 	public OneSignalUserDto createOneSignalUser(OneSignalUserDto userDto) throws ApiException {
-		log.info("createOneSignalUser(): {}", userDto);
+		log.info("createOneSignalUser(): User Slug {}", userDto.getSlug());
 		List<SubscriptionObject> subscriptionObjects = new ArrayList<>();
 
-		for (SubscriptionObject requestedSubscription : userDto.getSubscriptions()) {
-			if (!ObjectUtils.isEmpty(requestedSubscription.getType())
-					&& StringUtils.isNotBlank(requestedSubscription.getToken())) {
-				requestedSubscription.setEnabled(true);
-				subscriptionObjects.add(requestedSubscription);
+		userDto = getOneSignalUser(userDto);
+		if (!ObjectUtils.isEmpty(userDto.getOneSignalUser())) {
+			throw new ApiException("User Already Exists with Slug " + userDto.getSlug());
+		}
+
+		if (!ObjectUtils.isEmpty(userDto.getSubscriptions())) {
+			for (SubscriptionObject requestedSubscription : userDto.getSubscriptions()) {
+				if (!ObjectUtils.isEmpty(requestedSubscription.getType())
+						&& StringUtils.isNotBlank(requestedSubscription.getToken())) {
+					requestedSubscription.setEnabled(true);
+					subscriptionObjects.add(requestedSubscription);
+				}
 			}
 		}
 
+		log.info("createOneSignalUser(): User Slug {}, Subscriptions {}", userDto.getSlug(), subscriptionObjects);
 		User user = new User();
 		user.setSubscriptions(subscriptionObjects);
 		user.setIdentity(Map.of(OneSignalUserDto.EXTERNAL_ID, userDto.getSlug()));
 		PropertiesObject propertiesObject = new PropertiesObject();
 		propertiesObject.setTags(Map.of(OneSignalUserDto.USER_SLUG, userDto.getSlug()));
 		user.setProperties(propertiesObject);
-		try {
-			User oneSignalUser = getOneSignalApiInstance().createUser(oneSignalAuthDto.getAppId(), user);
-			userDto.setOneSignalUser(oneSignalUser);
-			userDto.setSubscriptions(oneSignalUser.getSubscriptions());
-			log.info("createOneSignalUser(): {}", oneSignalUser.toJson());
-		} catch (ApiException e) {
-			log.info("createOneSignalUser(): Error {}", e);
-			e.printStackTrace();
+		User oneSignalUser = getOneSignalApiInstance().createUser(oneSignalAuthDto.getAppId(), user);
+		if (ObjectUtils.isEmpty(oneSignalUser)) {
+			throw new ApiException("Unable to create User with Slug {}" + userDto.getSlug());
+		}
+		userDto.setOneSignalUser(oneSignalUser);
+		userDto.setSubscriptions(oneSignalUser.getSubscriptions());
+		log.info("createOneSignalUser(): User Slug {}, User OneSignal Id {}", userDto.getSlug(),
+				userDto.getOneSignalUser().getIdentity());
+		if (!ObjectUtils.isEmpty(subscriptionObjects) && ObjectUtils.isEmpty(userDto.getSubscriptions())) {
+			throw new ApiException("Unable to create subscription For User with Slug {}" + userDto.getSlug());
 		}
 		return userDto;
-
 	}
 
 	@Override
-	public OneSignalUserDto updateOneSignalUser(OneSignalUserDto userDto) throws ApiException {
-		log.info("updateOneSignalUser(): {}", userDto);
+	public OneSignalUserDto updateOneSignalUser(OneSignalUserDto userDto, boolean deleteOtherSameTypeSubscriptions)
+			throws ApiException {
+		log.info("updateOneSignalUser(): User Slug {}", userDto.getSlug());
 		List<SubscriptionObject> subscriptionObjects = new ArrayList<>();
 
-		for (SubscriptionObject requestedSubscription : userDto.getSubscriptions()) {
-			if (!ObjectUtils.isEmpty(requestedSubscription.getType())
-					&& StringUtils.isNotBlank(requestedSubscription.getToken())) {
-				subscriptionObjects.add(requestedSubscription);
-			}
-		}
+		userDto = getOneSignalUser(userDto);
+		if (ObjectUtils.isEmpty(userDto.getOneSignalUser())) {
+			log.info("updateOneSignalUser(): User Slug {} User Does Not Exist Create New User", userDto.getSlug());
+			userDto = createOneSignalUser(userDto);
+		} else {
+			log.info("updateOneSignalUser(): User Slug {} User Exists Updating User with OneSignal Id {}",
+					userDto.getSlug(), userDto.getOneSignalUser().getIdentity());
 
-		if (!ObjectUtils.isEmpty(subscriptionObjects)) {
-			OneSignalUserDto oneSignalUserDto = getOneSignalUser(userDto);
-			List<SubscriptionObject> userCurrentSubscriptions = new ArrayList<>();
-			if (!ObjectUtils.isEmpty(oneSignalUserDto.getOneSignalUser())
-					&& !ObjectUtils.isEmpty(oneSignalUserDto.getOneSignalUser().getSubscriptions())) {
-				userCurrentSubscriptions = oneSignalUserDto.getOneSignalUser().getSubscriptions();
+			if (!ObjectUtils.isEmpty(userDto.getSubscriptions())) {
+				for (SubscriptionObject requestedSubscription : userDto.getSubscriptions()) {
+					if (!ObjectUtils.isEmpty(requestedSubscription.getType())
+							&& StringUtils.isNotBlank(requestedSubscription.getToken())) {
+						subscriptionObjects.add(requestedSubscription);
+					}
+				}
 			}
-			log.info("updateOneSignalUser(): checking existing subscriptions(): {}", userCurrentSubscriptions);
-			for (SubscriptionObject newSubscriptionObject : subscriptionObjects) {
-				SubscriptionObject alreadySubscribedObject = userCurrentSubscriptions.stream()
-						.filter(e -> e.getType().equals(newSubscriptionObject.getType())).findFirst().orElse(null);
-				if (!ObjectUtils.isEmpty(alreadySubscribedObject)
-						&& !alreadySubscribedObject.getToken().equals(newSubscriptionObject.getToken())) {
-					log.info("updateOneSignalUser():deleteSubscription(): Found alreadySubscribedObject {}",
-							alreadySubscribedObject.toJson());
-					try {
-						getOneSignalApiInstance().deleteSubscription(oneSignalAuthDto.getAppId(),
-								alreadySubscribedObject.getId());
-						System.out.println("Deleted Old Token");
-						log.info("updateOneSignalUser():deleteSubscription(): Deleted Found alreadySubscribedObject {}",
-								alreadySubscribedObject.toJson());
-					} catch (ApiException e) {
-						log.info("updateOneSignalUser():deleteSubscription(): Error {}", e);
-						e.printStackTrace();
-					}
-				} else {
-					log.info("updateOneSignalUser():deleteSubscription(): Nothing To Delete");
+
+			if (!ObjectUtils.isEmpty(subscriptionObjects)) {
+				List<SubscriptionObject> userCurrentSubscriptions = new ArrayList<>();
+				if (!ObjectUtils.isEmpty(userDto.getOneSignalUser())
+						&& !ObjectUtils.isEmpty(userDto.getOneSignalUser().getSubscriptions())) {
+					userCurrentSubscriptions = userDto.getOneSignalUser().getSubscriptions();
+					log.info("updateOneSignalUser(): User Slug {}, Existing OneSignal Subscriptions {}",
+							userDto.getSlug(), userCurrentSubscriptions);
 				}
-				if (ObjectUtils.isEmpty(alreadySubscribedObject) || (!ObjectUtils.isEmpty(alreadySubscribedObject)
-						&& !alreadySubscribedObject.getToken().equals(newSubscriptionObject.getToken()))) {
-					log.info("updateOneSignalUser(): createSubscription() Trying to Create New Subscription ");
-					newSubscriptionObject.setEnabled(true);
-					CreateSubscriptionRequestBody createSubscriptionRequestBody = new CreateSubscriptionRequestBody();
-					createSubscriptionRequestBody.setSubscription(newSubscriptionObject);
-					try {
-						log.info("updateOneSignalUser():createSubscription(): Creating New Subscription {}",
-								newSubscriptionObject.toJson());
-						InlineResponse201 result = getOneSignalApiInstance().createSubscription(
-								oneSignalAuthDto.getAppId(), OneSignalUserDto.EXTERNAL_ID, userDto.getSlug(),
-								createSubscriptionRequestBody);
-						System.out.println("Added New Token");
-						log.info("updateOneSignalUser():createSubscription(): Created New Subscription {}",
-								result.toJson());
-					} catch (ApiException e) {
-						log.info("updateOneSignalUser():createSubscription(): Error {}", e);
-						e.printStackTrace();
+
+				for (SubscriptionObject newSubscriptionObject : subscriptionObjects) {
+					log.info("updateOneSignalUser(): User Slug {}, Checking For Subscription {}", userDto.getSlug(),
+							newSubscriptionObject);
+					List<SubscriptionObject> alreadySubscribedObjects = userCurrentSubscriptions.stream()
+							.filter(e -> e.getType().equals(newSubscriptionObject.getType()))
+							.collect(Collectors.toList());
+					if (ObjectUtils.isEmpty(alreadySubscribedObjects)) {
+						log.info("updateOneSignalUser(): User Slug {}, Creating Fresh Subscription {}",
+								userDto.getSlug(), newSubscriptionObject);
+						// No Subscription For Current Device Type Add New
+						createOneSignalUserSubscription(userDto, newSubscriptionObject);
+					} else {
+						boolean alreadyFound = false;
+						for (SubscriptionObject alreadySubscribedObject : alreadySubscribedObjects) {
+							if (!alreadySubscribedObject.getToken().equals(newSubscriptionObject.getToken())) {
+								if (deleteOtherSameTypeSubscriptions) {
+									log.info("updateOneSignalUser(): User Slug {}, Deleting Old Subscription {}",
+											userDto.getSlug(), alreadySubscribedObject);
+									// Deleting Existing Subscription
+									deleteOneSignalUserSubscription(userDto, alreadySubscribedObject);
+								} else {
+									log.info("updateOneSignalUser(): User Slug {}, Disabling Old Subscription {}",
+											userDto.getSlug(), alreadySubscribedObject);
+									// Disable Existing Subscription
+									alreadySubscribedObject.setEnabled(false);
+									updateOneSignalUserSubscription(userDto, alreadySubscribedObject);
+								}
+							} else if (alreadySubscribedObject.getToken().equals(newSubscriptionObject.getToken())
+									&& !alreadySubscribedObject.getEnabled()) {
+								log.info("updateOneSignalUser(): User Slug {}, Enabling Old Disabled Subscription {}",
+										userDto.getSlug(), newSubscriptionObject);
+								// Enable Old Subscription if It is in disabled state
+								alreadySubscribedObject.setEnabled(true);
+								updateOneSignalUserSubscription(userDto, alreadySubscribedObject);
+								alreadyFound = true;
+							} else if (alreadySubscribedObject.getToken().equals(newSubscriptionObject.getToken())
+									&& alreadySubscribedObject.getEnabled()) {
+								log.info("updateOneSignalUser(): User Slug {}, Already Enabled Subscription Found {}",
+										userDto.getSlug(), alreadySubscribedObject);
+								alreadyFound = true;
+							}
+						}
+						if (!alreadyFound) {
+							log.info("updateOneSignalUser(): User Slug {}, Creating Fresh Subscription {}",
+									userDto.getSlug(), newSubscriptionObject);
+							// Add New Subscription
+							createOneSignalUserSubscription(userDto, newSubscriptionObject);
+						}
 					}
-				} else {
-					log.info(
-							"updateOneSignalUser(): createSubscription() Failed Trying to Create New Subscription {} {}",
-							alreadySubscribedObject, newSubscriptionObject);
+
 				}
+				addDelay();
+				userDto = getOneSignalUser(userDto);
+				log.info("updateOneSignalUser(): User Slug {}, One Signal User After Delay {}", userDto.getSlug(),
+						userDto.getOneSignalUser());
+			} else {
+				log.info("updateOneSignalUser(): User Slug {}, No Valid Subscriptions To Update {}", userDto.getSlug(),
+						userDto.getSubscriptions());
 			}
 		}
 		return userDto;
-
 	}
 
 	@Override
 	public void deleteOneSignalUser(OneSignalUserDto userDto) throws ApiException {
-		log.info("deleteOneSignalUser(): {}", userDto);
-		try {
+		log.info("deleteOneSignalUser(): User Slug {}", userDto.getSlug());
+		userDto = getOneSignalUser(userDto);
+		if (ObjectUtils.isEmpty(userDto.getOneSignalUser())) {
+			log.info("deleteOneSignalUser(): User Slug {} User Does Not Exist", userDto.getSlug());
+		} else {
 			getOneSignalApiInstance().deleteUser(oneSignalAuthDto.getAppId(), OneSignalUserDto.EXTERNAL_ID,
 					userDto.getSlug());
 			log.info("deleteOneSignalUser(): Deleted Successfull If Exists");
-		} catch (ApiException e) {
-			log.info("deleteOneSignalUser(): Error {}", e);
-			e.printStackTrace();
 		}
 	}
 
 	@Override
 	public OneSignalNotificationDto createOneSignalNotification(OneSignalNotificationDto notificationDto)
 			throws ApiException {
-		log.info("createOneSignalNotification(): {}", notificationDto);
+		log.info("deleteOneSignalUser() OneSignalNotificationDto: Heading {}, Custom Data {}",
+				notificationDto.getHeadings().getEn(), notificationDto.getCustomData());
 		// Setting up the notification
 		Notification notification = createNotification(notificationDto);
-		log.info("createOneSignalNotification(): {}", notification);
+		log.info("deleteOneSignalUser() Notification: Heading {}, Custom Data {}", notification.getHeadings().getEn(),
+				notification.getData());
 
 		if (!ObjectUtils.isEmpty(notification)) {
 			// Sending the request
@@ -208,10 +249,74 @@ public class OneSignalConfigureAndPushServiceImpl implements OneSignalConfigureA
 				log.info("createOneSignalNotification(): Success {}", response.toJson());
 			}
 		} else {
-			System.out.println("createOneSignalNotification(): EMPTY {}" + notification);
 			log.info("createOneSignalNotification(): EMPTY {}", notification);
 		}
 		return notificationDto;
+	}
+
+	@SuppressWarnings("unused")
+	private void deleteOneSignalUserSubscription(OneSignalUserDto userDto, SubscriptionObject subscriptionObject) {
+		log.info("deleteOneSignalUserSubscription() Found alreadySubscribedObject {}", subscriptionObject.toJson());
+		try {
+			getOneSignalApiInstance().deleteSubscription(oneSignalAuthDto.getAppId(), subscriptionObject.getId());
+			System.out.println("Deleted Old Token");
+			log.info("deleteOneSignalUserSubscription() Deleted Found alreadySubscribedObject {}",
+					subscriptionObject.toJson());
+		} catch (ApiException e) {
+			log.info("deleteOneSignalUserSubscription() Error {}", e);
+			e.printStackTrace();
+		}
+	}
+
+	private SubscriptionObject createOneSignalUserSubscription(OneSignalUserDto userDto,
+			SubscriptionObject subscriptionObject) {
+		try {
+			if (!ObjectUtils.isEmpty(userDto.getOneSignalUser())) {
+				log.info(
+						"createOneSignalUserSubscription() Trying to Create New Subscription User Slug {} User One Signal Id {} Subscrion Token {}",
+						userDto.getSlug(), userDto.getOneSignalUser().getIdentity(), subscriptionObject.getToken());
+				CreateSubscriptionRequestBody createSubscriptionRequestBody = new CreateSubscriptionRequestBody();
+				subscriptionObject.setEnabled(true);
+				createSubscriptionRequestBody.setSubscription(subscriptionObject);
+				log.info("createOneSignalUserSubscription() Creating New Subscription {}", subscriptionObject.toJson());
+				InlineResponse201 result = getOneSignalApiInstance().createSubscription(oneSignalAuthDto.getAppId(),
+						OneSignalUserDto.EXTERNAL_ID, userDto.getSlug(), createSubscriptionRequestBody);
+				log.info("createOneSignalUserSubscription() Created New Subscription {}", result.toJson());
+				return result.getSubscription();
+			} else {
+				log.info(
+						"createOneSignalUserSubscription() Trying to Create New Subscription User Slug {} No User Exists",
+						userDto.getSlug());
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		return null;
+	}
+
+	private SubscriptionObject updateOneSignalUserSubscription(OneSignalUserDto userDto,
+			SubscriptionObject subscriptionObject) {
+		try {
+			if (!ObjectUtils.isEmpty(userDto.getOneSignalUser())) {
+				log.info(
+						"updateOneSignalUserSubscription() Trying to Update Subscription User Slug {} User One Signal Id {} Subscrion Token {}",
+						userDto.getSlug(), userDto.getOneSignalUser().getIdentity(), subscriptionObject.getToken());
+				UpdateSubscriptionRequestBody updateSubscriptionRequestBody = new UpdateSubscriptionRequestBody();
+				updateSubscriptionRequestBody.setSubscription(subscriptionObject);
+				getOneSignalApiInstance().updateSubscription(oneSignalAuthDto.getAppId(), subscriptionObject.getId(),
+						updateSubscriptionRequestBody);
+				log.info("updateOneSignalUserSubscription() Update Found alreadySubscribedObject {}",
+						subscriptionObject.toJson());
+				return subscriptionObject;
+			} else {
+				log.info(
+						"updateOneSignalUserSubscription() Trying to Update Subscription User Slug {} No User Exists or Subscription Found",
+						userDto.getSlug());
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		return null;
 	}
 
 	@SuppressWarnings("unused")
@@ -249,6 +354,13 @@ public class OneSignalConfigureAndPushServiceImpl implements OneSignalConfigureA
 			log.error("Non Configured Notification");
 		}
 		return null;
+	}
+
+	private void addDelay() {
+		try {
+			Thread.sleep(5000);
+		} catch (Exception ex) {
+		}
 	}
 
 }
