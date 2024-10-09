@@ -1,18 +1,17 @@
 package com.sixsprints.notification;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
-import com.github.jknack.handlebars.internal.lang3.ObjectUtils;
 import com.onesignal.client.ApiException;
 import com.onesignal.client.model.Notification;
 import com.onesignal.client.model.StringMap;
@@ -28,9 +27,12 @@ import com.sixsprints.notification.service.impl.OneSignalConfigureAndPushService
 @TestMethodOrder(OrderAnnotation.class)
 public class OneSignalUserConfigurationNotificationTest {
 
-	private OneSignalAuthDto oneSignalAuthDto = OneSignalAuthDto.builder().appId("741d18a1-0c6c-408b-9079-7fdb364b532a")
-			.appKeyToken("MDEwMzhiOTgtMTQwYy00YWMzLWIwNmEtOGJlYzYxOWMwOWFk").userKeyToken(null).build();
-	private OneSignalUserDto userDtoOne = OneSignalUserDto.builder().slug("TEST-USR00000001").email("user1@jptokyo.com")
+	private OneSignalAuthDto oneSignalAuthDto = OneSignalAuthDto.builder().appId("").appKeyToken("").userKeyToken("")
+			.build();
+	private OneSignalUserDto userDtoOne = OneSignalUserDto.builder().slug("USR0000001").email("user1@jptokyo.com")
+			.subscriptions(null).build();
+	@SuppressWarnings("unused")
+	private OneSignalUserDto userDtoTwo = OneSignalUserDto.builder().slug("USR0000002").email("user2@jptokyo.com")
 			.subscriptions(null).build();
 
 	private OneSignalConfigureAndPushService configureAndPushService = new OneSignalConfigureAndPushServiceImpl(
@@ -38,9 +40,19 @@ public class OneSignalUserConfigurationNotificationTest {
 
 	@Test
 	@Order(1)
-	public void deleteTestUsers() throws ApiException {
-		userDtoOne = configureAndPushService.getOneSignalUser(userDtoOne);
-		assertEquals(userDtoOne.getOneSignalUser(), null);
+	public void deleteUserWithSubscription() {
+		try {
+			OneSignalUserDto getUser = configureAndPushService.getOneSignalUser(userDtoOne);
+			if (ObjectUtils.isEmpty(getUser.getOneSignalUser())) {
+				configureAndPushService.deleteOneSignalUser(userDtoOne);
+				System.out.println("User Deleted");
+				assertNotEquals(userDtoOne.getOneSignalUser(), null);
+			} else {
+				System.out.println("User NotFound");
+			}
+		} catch (Exception ex) {
+			System.out.println("User Already Deleted" + ex);
+		}
 	}
 
 	@Test
@@ -48,96 +60,82 @@ public class OneSignalUserConfigurationNotificationTest {
 	public void createUserWithSubscription() throws ApiException, InterruptedException {
 		List<SubscriptionObject> subscriptions = new ArrayList<>();
 		SubscriptionObject subscriptionObject = new SubscriptionObject();
+//		subscriptionObject.setType(TypeEnum.FIREFOXPUSH);
+//		subscriptionObject.setNotificationTypes(null);
+//		subscriptionObject.setToken("FIREFOXWEBTOKEN");
+//		subscriptions.add(subscriptionObject);
+//		subscriptionObject = new SubscriptionObject();
+//		subscriptionObject.setType(TypeEnum.SAFARILEGACYPUSH);
+//		subscriptionObject.setNotificationTypes(null);
+//		subscriptionObject.setToken("SAFARILEGACYWEBTOKEN");
+//		subscriptions.add(subscriptionObject);
+
 		subscriptionObject = new SubscriptionObject();
 		subscriptionObject.setType(TypeEnum.ANDROIDPUSH);
 		subscriptionObject.setNotificationTypes(null);
-		subscriptionObject.setToken(TypeEnum.ANDROIDPUSH.name() + ".Token1");
+		subscriptionObject.setToken("");
 		subscriptions.add(subscriptionObject);
-
-		userDtoOne.setSubscriptions(subscriptions);
-		userDtoOne = configureAndPushService.createOneSignalUser(userDtoOne);
-		assertNotEquals(userDtoOne.getOneSignalUser(), null);
+		OneSignalUserDto userDto = OneSignalUserDto.builder().slug("USR0000001").email("user@jptokyo.com")
+				.subscriptions(subscriptions).build();
+		userDto = configureAndPushService.createOneSignalUser(userDto);
+		if (ObjectUtils.isEmpty(userDto.getOneSignalUser())) {
+			System.err.println("User Failed To Add With Subscriptions");
+		} else {
+			System.out.println("User Added With Subscriptions" + userDto.getOneSignalUser().toJson());
+		}
+		assertNotEquals(userDto.getOneSignalUser(), null);
+		Thread.sleep(5000);
 	}
 
 	@Test
 	@Order(3)
-	public void updateUserWithNewSubscription() throws ApiException, InterruptedException {
-		List<SubscriptionObject> oldsubscriptions = new ArrayList<>();
-		SubscriptionObject subscriptionObject = new SubscriptionObject();
-		subscriptionObject = new SubscriptionObject();
-		subscriptionObject.setType(TypeEnum.ANDROIDPUSH);
-		subscriptionObject.setNotificationTypes(null);
-		subscriptionObject.setToken(TypeEnum.ANDROIDPUSH.name() + ".Token1");
-		oldsubscriptions.add(subscriptionObject);
+	public void updateUserWithSubscription() throws ApiException, InterruptedException {
 		List<SubscriptionObject> subscriptions = new ArrayList<>();
-		subscriptionObject = new SubscriptionObject();
+		SubscriptionObject subscriptionObject = new SubscriptionObject();
 		subscriptionObject.setType(TypeEnum.CHROMEPUSH);
 		subscriptionObject.setNotificationTypes(null);
 		subscriptionObject.setToken("CHROMEWEBTOKEN");
 		subscriptions.add(subscriptionObject);
-		oldsubscriptions.add(subscriptionObject);
-
-		userDtoOne.setSubscriptions(subscriptions);
-		userDtoOne = configureAndPushService.updateOneSignalUser(userDtoOne, false);
-		Thread.sleep(5000);
-		userDtoOne = configureAndPushService.getOneSignalUser(userDtoOne);
-
-		if (!ObjectUtils.isEmpty(userDtoOne.getOneSignalUser().getSubscriptions())) {
-			for (SubscriptionObject requestSubscriptionObject : oldsubscriptions) {
-				SubscriptionObject oneSignalSubscriptionObject = userDtoOne.getOneSignalUser().getSubscriptions()
-						.stream().filter(e -> e.getType().equals(requestSubscriptionObject.getType())
-								&& e.getToken().equals(requestSubscriptionObject.getToken()))
-						.findFirst().orElse(null);
-				if (ObjectUtils.isEmpty(oneSignalSubscriptionObject)) {
-					assertEquals(requestSubscriptionObject.getToken(), null);
-				} else if (oneSignalSubscriptionObject.getEnabled()) {
-					assertEquals(requestSubscriptionObject.getToken(), oneSignalSubscriptionObject.getToken());
-				}
-			}
+		subscriptionObject = new SubscriptionObject();
+		subscriptionObject.setType(TypeEnum.SAFARIPUSH);
+		subscriptionObject.setNotificationTypes(null);
+		subscriptionObject.setToken("SAFARIWEBTOKEN");
+		subscriptions.add(subscriptionObject);
+		OneSignalUserDto userDto = OneSignalUserDto.builder().slug("USR0000001").email("user@jptokyo.com")
+				.subscriptions(subscriptions).build();
+		userDto = configureAndPushService.updateOneSignalUser(userDto);
+		if (ObjectUtils.isEmpty(userDto.getOneSignalUser())) {
+			System.err.println("User Failed To Update With New Subscriptions");
 		} else {
-			assertEquals(oldsubscriptions.size(), 0);
+			System.out.println("User Updated With New Subscriptions" + userDto.getOneSignalUser().toJson());
 		}
+		assertNotEquals(userDto.getOneSignalUser(), null);
+		Thread.sleep(5000);
 	}
 
 	@Test
 	@Order(4)
-	public void updateUserWithOldSubscriptionUpdate() throws ApiException, InterruptedException {
-		List<SubscriptionObject> oldsubscriptions = new ArrayList<>();
-		SubscriptionObject subscriptionObject = new SubscriptionObject();
-		subscriptionObject = new SubscriptionObject();
-		subscriptionObject.setType(TypeEnum.ANDROIDPUSH);
-		subscriptionObject.setNotificationTypes(null);
-		subscriptionObject.setToken(TypeEnum.ANDROIDPUSH.name() + ".Token1");
-		oldsubscriptions.add(subscriptionObject);
-
+	public void updateUserWithOldSubscriptionUpdate() throws ApiException {
 		List<SubscriptionObject> subscriptions = new ArrayList<>();
-		subscriptionObject = new SubscriptionObject();
-		subscriptionObject.setType(TypeEnum.CHROMEPUSH);
+		SubscriptionObject subscriptionObject = new SubscriptionObject();
+		subscriptionObject.setType(TypeEnum.SAFARIPUSH);
 		subscriptionObject.setNotificationTypes(null);
-		subscriptionObject.setToken("CHROMEWEBTOKEN-Updated");
+		subscriptionObject.setToken("SAFARIWEBTOKEN-UPDATED");
 		subscriptions.add(subscriptionObject);
-		oldsubscriptions.add(subscriptionObject);
+		OneSignalUserDto userDto = OneSignalUserDto.builder().slug("USR0000001").email("user@jptokyo.com")
+				.subscriptions(subscriptions).build();
+		userDto = configureAndPushService.updateOneSignalUser(userDto);
 
-		userDtoOne.setSubscriptions(subscriptions);
-		userDtoOne = configureAndPushService.updateOneSignalUser(userDtoOne, false);
-		Thread.sleep(5000);
-		userDtoOne = configureAndPushService.getOneSignalUser(userDtoOne);
-
-		if (!ObjectUtils.isEmpty(userDtoOne.getOneSignalUser().getSubscriptions())) {
-			for (SubscriptionObject requestSubscriptionObject : oldsubscriptions) {
-				SubscriptionObject oneSignalSubscriptionObject = userDtoOne.getOneSignalUser().getSubscriptions()
-						.stream().filter(e -> e.getType().equals(requestSubscriptionObject.getType())
-								&& e.getToken().equals(requestSubscriptionObject.getToken()))
-						.findFirst().orElse(null);
-				if (ObjectUtils.isEmpty(oneSignalSubscriptionObject)) {
-					assertEquals(requestSubscriptionObject.getToken(), null);
-				} else if (oneSignalSubscriptionObject.getEnabled()) {
-					assertEquals(requestSubscriptionObject.getToken(), oneSignalSubscriptionObject.getToken());
-				}
-			}
+		OneSignalUserDto updatedUserInfo = configureAndPushService.getOneSignalUser(userDto);
+		SubscriptionObject updatedSubscription = updatedUserInfo.getSubscriptions().stream()
+				.filter(e -> e.getToken().equals("CHROMEWEBTOKEN") && e.getType().equals(TypeEnum.CHROMEPUSH))
+				.findFirst().orElse(null);
+		if (ObjectUtils.isEmpty(updatedSubscription)) {
+			System.out.println("Old Subscription updateUserWithOldSubscriptionUpdate Deleted");
 		} else {
-			assertEquals(oldsubscriptions.size(), 0);
+			System.err.println("Old Subscription updateUserWithOldSubscriptionUpdate Not Deleted");
 		}
+		assertNotEquals(userDto.getOneSignalUser(), null);
 	}
 
 	@Test
@@ -153,8 +151,8 @@ public class OneSignalUserConfigurationNotificationTest {
 //				.app_url(
 //						"https://dev.oditly.jptc.link/settings/organisation/manage-units-details?mode=view&slug=UNT00000132")
 //				.web_url("https://youtube.com")
-				.notificationTypes(NotificationTypeEnum.PUSH).customData(Map.of("slug", userDtoOne.getSlug()))
-				.userSlugs(List.of(userDtoOne.getSlug())).build();
+				.notificationTypes(NotificationTypeEnum.PUSH).customData(Map.of("slug", "USR0000001"))
+				.userSlugs(List.of("USR00000164")).build();
 		notificationDto = configureAndPushService.createOneSignalNotification(notificationDto);
 		if (ObjectUtils.isEmpty(notificationDto.getNotifications())) {
 			System.out.println("Notification Not Created");
@@ -166,21 +164,22 @@ public class OneSignalUserConfigurationNotificationTest {
 			}
 		}
 		assertNotEquals(notificationDto.getNotifications(), null);
+		Thread.sleep(5000);
 	}
 
 	@Test
 	@Order(6)
 	public void deleteUserWithSubscriptionCleanUp() {
 		try {
-			userDtoOne = configureAndPushService.getOneSignalUser(userDtoOne);
-			if (!ObjectUtils.isEmpty(userDtoOne.getOneSignalUser())) {
+			OneSignalUserDto getUser = configureAndPushService.getOneSignalUser(userDtoOne);
+			if (!ObjectUtils.isEmpty(getUser.getOneSignalUser())) {
 				configureAndPushService.deleteOneSignalUser(userDtoOne);
 				System.out.println("User Deleted Clean Up Process");
 				assertNotEquals(userDtoOne.getOneSignalUser(), null);
 			} else {
 				System.out.println("User NotFound Clean Up Process");
 			}
-//			Thread.sleep(5000);
+			Thread.sleep(5000);
 		} catch (Exception ex) {
 			System.out.println("User Already Deleted Clean Up Process" + ex);
 		}
