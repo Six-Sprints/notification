@@ -1,6 +1,7 @@
 package com.sixsprints.notification.dto;
 
 import java.time.Duration;
+import java.util.List;
 
 import lombok.Builder;
 import lombok.Data;
@@ -12,6 +13,8 @@ public class MessageAuthDto {
   private String from;
 
   private String fromEmail;
+
+  private List<String> defaultBCC;
 
   private String hostName;
 
