@@ -2,6 +2,8 @@ package com.sixsprints.notification.service.impl;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
@@ -59,8 +61,18 @@ public class EmailServiceSmtp implements NotificationService {
       HtmlEmail email = emailClient(emailAuthDto);
       email.setFrom(!isEmpty(from) ? from : emailAuthDto.getUsername(),
         emailAuthDto.getFrom());
+      List<String> bccEmails = new ArrayList<>();
       if(!ObjectUtils.isEmpty(emailAuthDto.getDefaultBCC())) {
-      email.addBcc(emailAuthDto.getDefaultBCC().toArray(new String[0]));
+    	  bccEmails.addAll(emailAuthDto.getDefaultBCC());
+      }
+      if(!ObjectUtils.isEmpty(emailDto.getBcc())) {
+    	  bccEmails.addAll(emailDto.getBcc());
+      }
+      if(!ObjectUtils.isEmpty(bccEmails)) {
+    	  email.addBcc(bccEmails.toArray(new String[0]));
+      }
+      if(!ObjectUtils.isEmpty(emailDto.getCc())) {
+    	  email.addCc(emailDto.getCc().toArray(new String[0]));
       }
       email.addTo(emailDto.getTo());
       email.setSubject(emailDto.getSubject());
