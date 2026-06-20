@@ -15,7 +15,7 @@
 		<lombok.version>1.18.30</lombok.version>
 		<junit.version>5.10.0</junit.version>
 		<json.transform.version>0.1.17</json.transform.version>
-		<handlebars.version>4.3.1</handlebars.version>
+		<handlebars.version>4.5.2</handlebars.version>
 		<maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
